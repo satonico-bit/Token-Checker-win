@@ -22,8 +22,9 @@ public static class StartupManager
             using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true)!;
             if (value)
             {
-                var exe = Environment.ProcessPath ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
-                key.SetValue(AppName, $"\"{exe}\"");
+                var exe = Environment.ProcessPath;
+                if (exe is not null)
+                    key.SetValue(AppName, $"\"{exe}\"");
             }
             else
             {

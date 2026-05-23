@@ -6,8 +6,7 @@ macOS 版 [Token Checker](https://github.com/satonico/Token-Checker) の Windows
 
 ## 動作要件
 
-- Windows 10 / 11
-- .NET 8.0 SDK 以上（ビルドに必要）
+- Windows 10 / 11（64bit）
 - Claude Code CLI（`claude login` 済み）
 - Codex CLI（`npm i -g @openai/codex` 後、`codex login` 済み）
 
@@ -15,19 +14,13 @@ macOS 版 [Token Checker](https://github.com/satonico/Token-Checker) の Windows
 
 ## インストール
 
-### 1. .NET 8 SDK をインストール
+### 方法A: exe をダウンロード（推奨・無設定）
 
-`dotnet` コマンドが未インストールの場合（`用語 'dotnet' は認識されません` というエラーが出る場合）、先に SDK を入れる。
+[Releases](https://github.com/satonico/Token-Checker-win/releases) から `TokenChecker.exe` をダウンロードしてダブルクリックするだけ。.NET ランタイムを同梱しているため、**.NET のインストールは不要**。
 
-```powershell
-winget install Microsoft.DotNet.SDK.8
-```
+### 方法B: ソースからビルド
 
-インストール後、**PowerShell を一度閉じて開き直す**（PATH を反映させるため）。`dotnet --version` で `8.x.x` が表示されれば成功。
-
-> winget が使えない場合は [.NET 8 SDK の公式ダウンロードページ](https://dotnet.microsoft.com/download/dotnet/8.0) からインストーラーを入手する。
-
-### 2. ビルド
+開発者向け。先に [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) が必要（`winget install Microsoft.DotNet.SDK.8` でも可。インストール後は PowerShell を開き直す）。
 
 ```powershell
 git clone https://github.com/satonico/Token-Checker-win.git
@@ -35,7 +28,15 @@ cd Token-Checker-win
 dotnet build TokenChecker.sln -c Release
 ```
 
-`TokenChecker\bin\Release\net8.0-windows\TokenChecker.exe` を起動する。
+出力先: `TokenChecker\bin\Release\net8.0-windows\TokenChecker.exe`
+
+`.exe` 単体で他PCに配布したい場合は、ランタイム同梱版を発行する。
+
+```powershell
+dotnet publish TokenChecker\TokenChecker.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish\
+```
+
+`publish\TokenChecker.exe` が .NET 不要で動く単一ファイルになる。
 
 ## 使い方
 
