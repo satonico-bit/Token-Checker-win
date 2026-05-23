@@ -1,53 +1,27 @@
 # Token Checker for Windows
 
-Claude Code と Codex CLI の使用率をタスクバー上にリアルタイム表示する Windows アプリ。
+タスクバーに Claude Code と Codex の使用率を常時表示する Windows アプリケーション。
 
----
+## 概要
+
+ターミナルで `claude login` / `codex login` を完了済みのアカウントに対し、Anthropic の OAuth エンドポイントおよび `codex app-server` の JSON-RPC を経由してレート制限情報を取得する。取得結果はタスクバー上のウィジェットにバーグラフで表示され、クリックでポップアップに 5 時間ウィンドウと週次ウィンドウの詳細を展開する。
+
+macOS 版 [Token Checker](https://github.com/satonico-bit/Token-Checker) の Windows 移植版。
 
 ## 動作要件
 
-| 要件 | バージョン |
-|------|-----------|
+| 項目 | 値 |
+|------|----|
 | OS | Windows 10 / 11 |
 | .NET | 8.0 以上（SDK または Runtime） |
 | Claude Code CLI | `claude login` 済み |
-| Codex CLI（任意） | `npm i -g @openai/codex` でインストール済み |
+| Codex CLI | `npm i -g @openai/codex` でインストール後 `codex login` 済み |
 
----
+Claude Code と Codex のいずれかが欠けていても、もう一方は動作する。
 
-## 機能
-
-### タスクバーウィジェット
-- Claude / Codex の 5 時間使用率をバーグラフでタスクバー上に常時表示
-- 使用率に応じて色が変化（緑 → 黄 → 赤）
-- 左端・右端への配置切替対応
-- マルチモニター対応（モニターごとにウィジェットを表示）
-
-### トレイアイコン
-- 使用率をアイコンのバーグラフで可視化
-- ホバーでツールチップに数値表示
-- 右クリックメニューから操作可能
-
-### 詳細ポップアップ（クリックで開閉）
-- Claude・Codex それぞれの 5 時間・週次使用率と進捗バーを表示
-- リセットまでの残り時間を表示（1 分以内は「まもなくリセット」）
-- 画面外クリックで自動クローズ
-
-### その他
-| 機能 | 説明 |
-|------|------|
-| 自動ポーリング | 2 分 / 5 分 / 10 分の間隔で自動更新 |
-| ログイン時起動 | レジストリ経由で自動起動の ON/OFF |
-| 再ログイン | ポップアップ内のボタンから `claude auth login` / `codex login` を起動 |
-| ポップアップ透明度 | 75% / 55% / 35% / 15% / 不透明 から選択 |
-| 多重起動防止 | Mutex により同一インスタンスを 1 つのみ許可 |
-
----
-
-## ビルド方法
+## インストール
 
 ```powershell
-cd D:\Token-Checker-win
 dotnet build TokenChecker.sln -c Release
 ```
 
@@ -59,103 +33,40 @@ dotnet build TokenChecker.sln -c Release
 dotnet publish TokenChecker\TokenChecker.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish\
 ```
 
-出力先: `publish\TokenChecker.exe`（.NET ランタイムを同梱した単体 exe）
+## 使用方法
 
----
+事前にターミナルで以下を実行し、両サービスにログインしておく。
 
-## 使い方
-
-1. `TokenChecker.exe` を起動するとタスクバー上にウィジェットが表示される
-2. ウィジェットまたはトレイアイコンをクリックすると詳細ポップアップが開く
-3. ポップアップ内の各種設定はリアルタイムで反映・保存される
-
-### トレイアイコン右クリックメニュー
-
-| 項目 | 動作 |
-|------|------|
-| 詳細を表示/非表示 | ポップアップの開閉 |
-| 今すぐ更新 | 即時データ取得 |
-| モニター切替 | 表示モニターを順番に切替 |
-| 終了 | アプリを終了 |
-
----
-
-## 設定ファイル
-
-設定は `%AppData%\TokenChecker\` 以下に自動保存されます。
-
-| ファイル | 内容 |
-|---------|------|
-| `settings.json` | ポーリング間隔・ウィジェット配置・透明度・モニター |
-| `claude-usage-cache.json` | 最後に取得した Claude 使用率のキャッシュ |
-| `claude-polling-state.json` | レート制限後の再試行タイミング管理 |
-
----
-
-## トークン取得の仕組み
-
-### Claude
-
-以下の順で OAuth アクセストークンを取得します。
-
-1. **Windows 資格情報マネージャー**（`Claude Code-credentials` / `Claude Code-credentials/{username}` / `Claude Code/{username}`）
-2. **ファイルフォールバック**
-   - `%USERPROFILE%\.claude\.credentials.json`
-   - `%USERPROFILE%\.claude\credentials.json`
-   - `%AppData%\Claude\credentials.json`
-
-取得したトークンで `https://api.anthropic.com/api/oauth/usage` を呼び出し、使用率を取得します。
-
-### Codex
-
-以下の順で `codex` 実行ファイルを探し、`codex app-server` を子プロセスとして起動。JSON-RPC (`account/rateLimits/read`) で使用率を取得します。
-
-1. `%AppData%\npm\codex.cmd`
-2. `%ProgramFiles%\nodejs\codex.cmd`
-3. PATH 上の `codex`（拡張子 `.exe` / `.cmd` / `.bat` のみ許可）
-
----
-
-## macOS 版との主な違い
-
-| macOS | Windows |
-|-------|---------|
-| Keychain | Windows 資格情報マネージャー + ファイルフォールバック |
-| MenuBarExtra | タスクバーウィジェット（WPF） + NotifyIcon |
-| SwiftUI popover | WPF ポップアップウィンドウ |
-| SMAppService | `HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` |
-| osascript → Terminal | `cmd.exe /k` |
-| SF Symbols | Unicode 文字（✦ ▶） |
-
----
-
-## アーキテクチャ
-
+```powershell
+claude login
+codex login
 ```
-TokenChecker/
-├── App.xaml.cs                  # エントリポイント・トレイ・ウィジェット管理
-├── Models/
-│   ├── Usage.cs                 # RateLimit / UsageSnapshot データモデル
-│   └── DomainError.cs           # エラー種別
-├── Providers/
-│   ├── ClaudeUsageProvider.cs   # Claude 使用率取得
-│   └── CodexUsageProvider.cs    # Codex 使用率取得
-├── Services/
-│   ├── AnthropicUsageApiClient.cs  # Anthropic API クライアント
-│   ├── CodexAppServerClient.cs     # Codex JSON-RPC クライアント
-│   ├── WindowsTokenSource.cs       # 資格情報マネージャー / ファイル読み取り
-│   └── StartupManager.cs           # スタートアップ登録（レジストリ）
-├── ViewModels/
-│   └── UsageViewModel.cs        # ポーリング・設定管理
-├── Views/
-│   ├── TaskbarWidget.xaml       # タスクバーウィジェット
-│   ├── UsagePopupWindow.xaml    # 詳細ポップアップ
-│   └── LoginWindow.xaml         # 再ログインダイアログ
-└── Utilities/
-    ├── PollingInterval.cs       # ポーリング間隔定義
-    ├── PopupTransparency.cs     # 透明度定義
-    ├── WidgetPlacement.cs       # ウィジェット配置定義
-    ├── TaskbarPosition.cs       # タスクバー位置検出
-    ├── TrayIconRenderer.cs      # トレイアイコン描画
-    └── WindowEffects.cs         # ウィンドウ効果
+
+いずれもブラウザの OAuth フローを経て、Windows 資格情報マネージャーまたは `%USERPROFILE%\.claude\credentials.json` にトークンが保存される。アプリは保存されたトークンを参照するため、ログインは CLI 側で 1 度行えばよい。
+
+`TokenChecker.exe` を起動するとタスクバー上にウィジェットが表示される。クリックで展開するポップアップには、5 時間ウィンドウと週次ウィンドウの使用率、リセットまでの残時間、更新間隔（2 分〜10 分、既定 2 分）、ログイン時の自動起動トグルが含まれる。
+
+## データ取得経路
+
+- **Claude**: Windows 資格情報マネージャー（`Claude Code-credentials`）から OAuth アクセストークンを取得し、`https://api.anthropic.com/api/oauth/usage` に対して `anthropic-beta: oauth-2025-04-20` ヘッダー付きで GET する。資格情報マネージャーに見つからない場合は `%USERPROFILE%\.claude\credentials.json` にフォールバック。
+- **Codex**: `codex app-server` を子プロセスとして起動し、行区切り JSON-RPC 経由で `account/rateLimits/read` を呼ぶ。
+
+## アンインストール
+
+アプリを終了後、以下を実行する。
+
+```powershell
+# 自動起動の登録を削除
+reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v TokenChecker /f
+
+# 設定・キャッシュファイルを削除
+Remove-Item "$env:APPDATA\TokenChecker" -Recurse -Force
 ```
+
+## 再配布・商標利用について
+
+本リポジトリには明示的なライセンスを設定していない。個人利用・改変は自由だが、再配布・フォーク公開を行う場合は事前に作者まで連絡すること。
+
+## 免責事項
+
+本ソフトウェアは現状有姿 (as-is) で提供されるものであり、動作・安全性・正確性について一切の保証を行わない。本ソフトウェアの利用に起因して発生したいかなる損害（データ損失、アカウント停止、トークン漏洩、セキュリティインシデント等を含むがこれに限らない）についても、作者は一切の責任を負わない。利用者自身の責任において使用すること。
