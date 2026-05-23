@@ -94,10 +94,12 @@ public sealed class CodexAppServerClient : IAsyncDisposable
     public async Task<CodexRateLimitsDto> ReadRateLimitsAsync(CancellationToken ct = default)
     {
         var result = await SendRequestAsync("account/rateLimits/read", new { }, ct);
+        if (result.ValueKind == System.Text.Json.JsonValueKind.Undefined)
+            throw DomainError.CodexRpcError("missing result");
         try
         {
             return result.Deserialize<CodexRateLimitsDto>(JsonOpts)
-                   ?? throw DomainError.CodexRpcError("missing result");
+                   ?? throw DomainError.CodexRpcError("null result");
         }
         catch (JsonException e)
         {
@@ -145,6 +147,23 @@ public sealed class CodexAppServerClient : IAsyncDisposable
                 idEl.ValueKind != JsonValueKind.Number) return;
 
             var id = idEl.GetInt32();
+
+            // JSON-RPC エラーレスポンスを正しく処理する
+            if (doc.RootElement.TryGetProperty("error", out var err))
+            {
+                var msg = err.TryGetProperty("message", out var m)
+                    ? m.GetString() ?? "RPC error" : "RPC error";
+                lock (_pendingLock)
+                {
+                    if (_pending.TryGetValue(id, out var tcs))
+                    {
+                        _pending.Remove(id);
+                        tcs.TrySetException(DomainError.CodexRpcError(msg));
+                    }
+                }
+                return;
+            }
+
             var result = doc.RootElement.TryGetProperty("result", out var r) ? r.Clone() : default;
 
             lock (_pendingLock)
