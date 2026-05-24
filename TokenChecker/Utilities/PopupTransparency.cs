@@ -2,43 +2,51 @@ namespace TokenChecker.Utilities;
 
 public enum PopupTransparency
 {
-    Percent75,
-    Percent55,
-    Percent35,
-    Percent15,
     Percent0,
+    Percent5,
+    Percent10,
+    Percent15,
+    Percent20,
+    Percent30,
+    Percent40,
 }
 
 public static class PopupTransparencyExtensions
 {
     public static byte ToAlpha(this PopupTransparency transparency) => transparency switch
     {
-        PopupTransparency.Percent75 => 0x40,
-        PopupTransparency.Percent55 => 0x70,
-        PopupTransparency.Percent35 => 0xA6,
-        PopupTransparency.Percent15 => 0xD9,
         PopupTransparency.Percent0  => 0xFF,
-        _                           => 0x70,
+        PopupTransparency.Percent5  => 0xF2,
+        PopupTransparency.Percent10 => 0xE6,
+        PopupTransparency.Percent15 => 0xD9,
+        PopupTransparency.Percent20 => 0xCC,
+        PopupTransparency.Percent30 => 0xB3,
+        PopupTransparency.Percent40 => 0x99,
+        _                           => 0xE6,
     };
 
     public static string ToLabel(this PopupTransparency transparency) => transparency switch
     {
-        PopupTransparency.Percent75 => "75% (薄い)",
-        PopupTransparency.Percent55 => "55%",
-        PopupTransparency.Percent35 => "35%",
-        PopupTransparency.Percent15 => "15% (濃い)",
         PopupTransparency.Percent0  => "0% (不透明)",
+        PopupTransparency.Percent5  => "5%",
+        PopupTransparency.Percent10 => "10%",
+        PopupTransparency.Percent15 => "15%",
+        PopupTransparency.Percent20 => "20%",
+        PopupTransparency.Percent30 => "30%",
+        PopupTransparency.Percent40 => "40% (薄い)",
         _                           => transparency.ToString(),
     };
 
-    public static readonly PopupTransparency Default = PopupTransparency.Percent55;
+    public static readonly PopupTransparency Default = PopupTransparency.Percent10;
 
     public static readonly PopupTransparency[] All =
     [
-        PopupTransparency.Percent75,
-        PopupTransparency.Percent55,
-        PopupTransparency.Percent35,
-        PopupTransparency.Percent15,
         PopupTransparency.Percent0,
+        PopupTransparency.Percent5,
+        PopupTransparency.Percent10,
+        PopupTransparency.Percent15,
+        PopupTransparency.Percent20,
+        PopupTransparency.Percent30,
+        PopupTransparency.Percent40,
     ];
 }
