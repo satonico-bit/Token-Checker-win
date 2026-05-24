@@ -37,7 +37,7 @@ public partial class UsagePopupWindow : Window
         Resources["TertiaryText"]  = new SolidColorBrush(MediaColor.FromRgb(0x70, 0x70, 0x70));
         Resources["BorderBrush2"]  = new SolidColorBrush(MediaColor.FromArgb(0x35, 0x00, 0x00, 0x00));
         Resources["SurfaceBrush"] = new SolidColorBrush(
-            MediaColor.FromArgb(_vm.PopupTransparency.ToAlpha(), 0xFF, 0xF9, 0xF0));
+            MediaColor.FromArgb(_vm.PopupTransparency.ToAlpha(), 0xFF, 0xFF, 0xFF));
 
         var hover = new SolidColorBrush(MediaColor.FromArgb(0x18, 0x00, 0x00, 0x00));
         Resources["HoverBg"] = hover;

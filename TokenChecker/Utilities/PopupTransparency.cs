@@ -37,7 +37,7 @@ public static class PopupTransparencyExtensions
         _                           => transparency.ToString(),
     };
 
-    public static readonly PopupTransparency Default = PopupTransparency.Percent10;
+    public static readonly PopupTransparency Default = PopupTransparency.Percent20;
 
     public static readonly PopupTransparency[] All =
     [
