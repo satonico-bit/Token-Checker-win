@@ -168,8 +168,8 @@ public partial class TaskbarWidget : Window
     private void UpdateLabels()
     {
         var snap       = _vm.Snapshot;
-        var claudeUtil = snap.ClaudeUsage?.FiveHour?.Utilization;
-        var codexUtil  = snap.CodexUsage?.FiveHour?.Utilization;
+        var claudeUtil = snap.ClaudeUsage?.FiveHour?.Utilization ?? snap.ClaudeUsage?.Weekly?.Utilization;
+        var codexUtil  = snap.CodexUsage?.FiveHour?.Utilization  ?? snap.CodexUsage?.Weekly?.Utilization;
 
         ClaudeLabel.Text       = claudeUtil.HasValue ? $"{(int)(claudeUtil.Value * 100)}%" : "--%";
         ClaudeLabel.Foreground = UtilBrush(claudeUtil);

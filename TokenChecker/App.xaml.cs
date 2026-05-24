@@ -254,8 +254,8 @@ public partial class App : System.Windows.Application
         Dispatcher.Invoke(() =>
         {
             var snap       = _vm!.Snapshot;
-            var claudeUtil = snap.ClaudeUsage?.FiveHour?.Utilization;
-            var codexUtil  = snap.CodexUsage?.FiveHour?.Utilization;
+            var claudeUtil = snap.ClaudeUsage?.FiveHour?.Utilization ?? snap.ClaudeUsage?.Weekly?.Utilization;
+            var codexUtil  = snap.CodexUsage?.FiveHour?.Utilization  ?? snap.CodexUsage?.Weekly?.Utilization;
 
             var newIcon = TrayIconRenderer.CreateIcon(claudeUtil, codexUtil);
             var old = _prevIcon;
@@ -272,8 +272,12 @@ public partial class App : System.Windows.Application
         var snap = _vm?.Snapshot;
         if (snap == null) return "Token Checker";
         var sb = new System.Text.StringBuilder("Token Checker");
-        if (snap.ClaudeUsage?.FiveHour is { } cf) sb.Append($"\nClaude 5h: {cf.Percent}%");
-        if (snap.CodexUsage?.FiveHour  is { } xf) sb.Append($"\nCodex  5h: {xf.Percent}%");
+        var cu = snap.ClaudeUsage;
+        if (cu?.FiveHour is { } cf)       sb.Append($"\nClaude 5h: {cf.Percent}%");
+        else if (cu?.Weekly is { } cw)    sb.Append($"\nClaude 7d: {cw.Percent}%");
+        var xu = snap.CodexUsage;
+        if (xu?.FiveHour is { } xf)       sb.Append($"\nCodex  5h: {xf.Percent}%");
+        else if (xu?.Weekly is { } xw)    sb.Append($"\nCodex  7d: {xw.Percent}%");
         if (snap.FetchedAt > DateTime.MinValue)    sb.Append($"\n更新: {snap.FetchedAt:HH:mm:ss}");
         return sb.ToString();
     }
