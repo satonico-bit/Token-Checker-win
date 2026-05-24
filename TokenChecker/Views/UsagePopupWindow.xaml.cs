@@ -68,8 +68,8 @@ public partial class UsagePopupWindow : Window
 
         if (snap.ClaudeError != null)
         {
-            var showLastValue = snap.ClaudeUsage != null &&
-                                snap.ClaudeError.Kind is DomainErrorKind.AnthropicRateLimited or DomainErrorKind.Network;
+            // 直前値があれば常に表示し続ける（待機/一時エラー中も数字を消さない）。
+            var showLastValue = snap.ClaudeUsage != null;
             ClaudeContent.Visibility = showLastValue ? Visibility.Visible : Visibility.Collapsed;
             ClaudeError.Visibility   = Visibility.Visible;
             ClaudeErrorTitle.Text    = showLastValue || snap.ClaudeError.Kind == DomainErrorKind.AnthropicRateLimited
@@ -133,14 +133,19 @@ public partial class UsagePopupWindow : Window
 
         if (snap.CodexError != null)
         {
-            CodexContent.Visibility = Visibility.Collapsed;
+            // 直前値があれば常に表示し続ける（待機/一時エラー中も数字を消さない）。
+            var showLastValue = snap.CodexUsage != null;
+            CodexContent.Visibility = showLastValue ? Visibility.Visible : Visibility.Collapsed;
             CodexError.Visibility   = Visibility.Visible;
+            CodexErrorTitle.Text    = showLastValue ? "⏳ 更新待機中" : "⚠ 取得失敗";
             CodexErrorMsg.Text      = snap.CodexError.Message;
-            return;
+            if (!showLastValue) return;
         }
-
-        CodexContent.Visibility = Visibility.Visible;
-        CodexError.Visibility   = Visibility.Collapsed;
+        else
+        {
+            CodexContent.Visibility = Visibility.Visible;
+            CodexError.Visibility   = Visibility.Collapsed;
+        }
         var usage = snap.CodexUsage!;
 
         if (usage.FiveHour is { } fh)

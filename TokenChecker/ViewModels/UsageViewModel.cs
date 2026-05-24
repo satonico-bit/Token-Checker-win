@@ -26,6 +26,7 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
     private bool _loginPrompted;
     private DateTime _claudeCooldownUntilUtc;
     private ServiceUsage? _lastClaudeUsage;
+    private ServiceUsage? _lastCodexUsage;
     private bool _claudeWaitingAfterRateLimit;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
 
@@ -214,14 +215,24 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
                     SaveClaudePollingState();
                 }
             }
+            // 一時的なエラー時は直前に取得できた値を表示し続ける（常に数字を出すため）。
             if (cu != null)
             {
                 _lastClaudeUsage = cu;
                 SaveClaudeUsageCache(cu);
             }
-            else if (ce?.Kind is DomainErrorKind.AnthropicRateLimited or DomainErrorKind.Network)
+            else if (ce != null && _lastClaudeUsage != null && IsTransient(ce.Kind))
             {
                 cu = _lastClaudeUsage;
+            }
+
+            if (xu != null)
+            {
+                _lastCodexUsage = xu;
+            }
+            else if (xe != null && _lastCodexUsage != null && IsTransient(xe.Kind))
+            {
+                xu = _lastCodexUsage;
             }
 
             Snapshot = new UsageSnapshot
@@ -243,6 +254,13 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
         catch (DomainError e)  { return (null, e); }
         catch (Exception   e)  { return (null, DomainError.Network(e.Message)); }
     }
+
+    // 直前値の表示継続が妥当な「一時的」エラーか。
+    // 認証切れ・未ログイン・CLI未検出は古い数字を出すと誤解を招くため対象外。
+    private static bool IsTransient(DomainErrorKind kind) => kind is not (
+        DomainErrorKind.TokenMissing or
+        DomainErrorKind.AnthropicUnauthorized or
+        DomainErrorKind.CodexNotFound);
 
     private void Notify([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

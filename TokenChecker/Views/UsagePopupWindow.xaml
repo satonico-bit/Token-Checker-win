@@ -217,7 +217,7 @@
                             BorderBrush="{StaticResource ErrorBorder}"
                             BorderThickness="1" CornerRadius="6" Padding="8,6">
                         <StackPanel>
-                            <TextBlock Text="⚠ 取得失敗" Foreground="#FF9800"
+                            <TextBlock x:Name="CodexErrorTitle" Text="⚠ 取得失敗" Foreground="#FF9800"
                                        FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
                             <TextBlock x:Name="CodexErrorMsg"
                                        Foreground="{DynamicResource SecondaryText}"
