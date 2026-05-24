@@ -14,7 +14,7 @@
         WindowStartupLocation="Manual">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="SurfaceBrush"    Color="#E6FFFFFF"/>
+        <SolidColorBrush x:Key="SurfaceBrush"    Color="#E6FFF9F0"/>
         <SolidColorBrush x:Key="BorderBrush2"     Color="#35000000"/>
         <SolidColorBrush x:Key="PrimaryText"      Color="#1A1A1A"/>
         <SolidColorBrush x:Key="SecondaryText"    Color="#454545"/>
