@@ -84,7 +84,7 @@ Remove-Item "$env:APPDATA\TokenChecker" -Recurse -Force -ErrorAction SilentlyCon
 
 ## ライセンス
 
-[MIT License](LICENSE) © 2026 satonico-bit
+[MIT License](LICENSE) © 2026 satonico224
 
 ## 免責事項
 
