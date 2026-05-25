@@ -17,3 +17,7 @@ publish/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+*.pdb
+*.exe
+
