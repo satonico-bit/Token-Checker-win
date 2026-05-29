@@ -133,6 +133,7 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
         _loginPrompted   = LoadLoginPrompted();
         _startupEnabled  = StartupManager.IsEnabled;
         _lastClaudeUsage = LoadClaudeUsageCache();
+        _lastCodexUsage  = LoadCodexUsageCache();
         var claudePollingState = LoadClaudePollingState();
         _claudeCooldownUntilUtc = claudePollingState?.NextRequestUtc ?? DateTime.MinValue;
         _claudeWaitingAfterRateLimit = claudePollingState?.WasRateLimited == true;
@@ -141,12 +142,13 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
             _claudeCooldownUntilUtc = DateTime.UtcNow.Add(ClaudeMinimumInterval);
         var waitingForClaudeRetry = _claudeWaitingAfterRateLimit &&
                                     _claudeCooldownUntilUtc > DateTime.UtcNow;
-        if (_lastClaudeUsage != null || waitingForClaudeRetry)
+        if (_lastClaudeUsage != null || _lastCodexUsage != null || waitingForClaudeRetry)
         {
             _snapshot = new UsageSnapshot
             {
                 ClaudeUsage = _lastClaudeUsage,
                 ClaudeError = waitingForClaudeRetry ? DomainError.AnthropicRateLimited(null) : null,
+                CodexUsage  = _lastCodexUsage,
                 FetchedAt = DateTime.MinValue,
             };
         }
@@ -239,6 +241,7 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
             if (xu != null)
             {
                 _lastCodexUsage = xu;
+                SaveCodexUsageCache(xu);
             }
             else if (xe != null && _lastCodexUsage != null && IsTransient(xe.Kind))
             {
@@ -266,11 +269,11 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
     }
 
     // 直前値の表示継続が妥当な「一時的」エラーか。
-    // 認証切れ・未ログイン・CLI未検出は古い数字を出すと誤解を招くため対象外。
+    // 未ログイン・CLI未検出は古い数字を出すと誤解を招くため対象外。
+    // CodexUnauthorized は再ログイン中も直前値を表示し続けるため一時的扱い。
     private static bool IsTransient(DomainErrorKind kind) => kind is not (
         DomainErrorKind.TokenMissing or
         DomainErrorKind.AnthropicUnauthorized or
-        DomainErrorKind.CodexUnauthorized or
         DomainErrorKind.CodexNotFound);
 
     private void Notify([CallerMemberName] string? name = null)
@@ -284,6 +287,9 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
     private static readonly string ClaudeUsageCachePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "TokenChecker", "claude-usage-cache.json");
+    private static readonly string CodexUsageCachePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "TokenChecker", "codex-usage-cache.json");
     private static readonly string ClaudePollingStatePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "TokenChecker", "claude-polling-state.json");
@@ -401,6 +407,27 @@ public sealed class UsageViewModel : INotifyPropertyChanged, IAsyncDisposable
         {
             Directory.CreateDirectory(Path.GetDirectoryName(ClaudeUsageCachePath)!);
             AtomicWrite(ClaudeUsageCachePath, JsonSerializer.Serialize(usage));
+        }
+        catch { }
+    }
+
+    private static ServiceUsage? LoadCodexUsageCache()
+    {
+        try
+        {
+            return File.Exists(CodexUsageCachePath)
+                ? JsonSerializer.Deserialize<ServiceUsage>(File.ReadAllText(CodexUsageCachePath))
+                : null;
+        }
+        catch { return null; }
+    }
+
+    private static void SaveCodexUsageCache(ServiceUsage usage)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CodexUsageCachePath)!);
+            AtomicWrite(CodexUsageCachePath, JsonSerializer.Serialize(usage));
         }
         catch { }
     }
